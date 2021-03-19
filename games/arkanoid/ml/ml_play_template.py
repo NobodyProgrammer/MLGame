@@ -4,6 +4,7 @@ The template of the main script of the machine learning process
 import pickle
 import os
 import math
+import random
 
 
 class MLPlay:
@@ -25,17 +26,16 @@ class MLPlay:
 
         if (scene_info["status"] == "GAME_OVER" or
                 scene_info["status"] == "GAME_PASS"):
-            print(self.last_x)
+            # print(self.last_x)
             return "RESET"
 
         if not self.ball_served:
             self.ball_served = True
-            command = "SERVE_TO_LEFT"
+            command = "SERVE_TO_RIGHT"
         else:
             command = ""
             x = (scene_info.get('ball')[0])
             y = (scene_info.get('ball')[1])
-            bias = 20
             now_plat_x = (scene_info.get('platform')[0])
             # print(now_plat_x)
             # print(scene_info.get('platform'))
@@ -44,13 +44,12 @@ class MLPlay:
             # print(self.slope)
             # print(self.predict_x)
             if(y-self.last_y > 0 and y > 150):
-                if(self.predict_x < 0):
-                    self.predictPoint(x, y)
-                    print(self.predict_x)
-                    print(now_plat_x)
-                if(now_plat_x > self.predict_x-20):
+                # if(self.predict_x < 0):
+                self.predictPoint(x, y)
+                # print("predict="+str(self.predict_x))
+                if(now_plat_x > self.predict_x - random.randint(10, 20)):
                     command = "MOVE_LEFT"
-                elif(now_plat_x < self.predict_x+40):
+                elif(now_plat_x < self.predict_x-random.randint(20, 30)):
                     command = "MOVE_RIGHT"
                 else:
                     command = "NONE"
@@ -64,6 +63,7 @@ class MLPlay:
                     command = "NONE"
             self.last_x = x
             self.last_y = y
+        print(command)
         return command
 
     def predictPoint(self, x, y):
