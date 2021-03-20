@@ -1,6 +1,7 @@
 import pickle
 import os
 import numpy as np
+import random
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.model_selection import train_test_split
 from sklearn.cluster import KMeans
@@ -17,20 +18,35 @@ def openPickle():
     direction = []
     platform = []
     my_command = []
-    for i in range(48):
-        file_path = "../log/"+str(i)+".pickle"
+    for j in range(48):
+        file_path = "../log/"+str(j)+".pickle"
         with open(file_path, 'rb') as f:
             data = pickle.load(f)
         # print(str(data['ml']['scene_info'][0])+"\n")
         scene_info = data['ml']['scene_info']
         command = data['ml']['command']
-
-        slope =
-        filteData(s['ball'][0], s['ball'][1])
+        #filteData(s['ball'][0], s['ball'][1])
         for i, s in enumerate(scene_info[1:]):
-            # if command[i] == "NONE":
-            #     continue
-            # else:
+            if command[i] == "MOVE_LEFT":
+                my_command.append(1)
+            elif command[i] == "MOVE_RIGHT":
+                my_command.append(2)
+            elif command[i] == "NONE":
+                my_command.append(0)
+            else:
+                continue
+            dx = scene_info[i]['ball'][0]-scene_info[i-1]['ball'][0]
+            if(dx == 0):
+                my_command.pop()
+                continue
+
+            dy = scene_info[i]['ball'][1]-scene_info[i-1]['ball'][1]
+            slope = dy/dx
+
+            # if command wrong return true to remove command(not the efficient data)
+            my_command.pop()
+            my_command.append(filtData(
+                scene_info[i]['ball'][0], scene_info[i]['ball'][1], dy, s['platform'][0], slope, command[i]))
             ball_x.append(s['ball'][0])
             ball_y.append(s['ball'][1])
             platform.append(s['platform'][0])
@@ -52,20 +68,6 @@ def openPickle():
                 else:
                     # left up
                     direction.append(3)
-            # if(ball_speed_y[i] > 0 and ball_y[i] > 150):
-            #     slope = ball_speed_y[i]/ball_speed_x[i]
-            #     cmd = rePredictCommand(
-            #         slope, s['ball'][0], s['ball'][1], s['platform'][0])
-            #     my_command.append(cmd)
-            # else:
-            if command[i] == "MOVE_LEFT":
-                my_command.append(1)
-            elif command[i] == "MOVE_RIGHT":
-                my_command.append(2)
-            elif command[i] == "NONE":
-                my_command.append(0)
-            else:
-                continue
 
     numpy_data = np.array(
         [ball_x, ball_y, ball_speed_x, ball_speed_y, direction, platform])
@@ -97,26 +99,41 @@ def KMeanTrain(data, command):
         pickle.dump(kmeans, f)
 
 
-def filteData(x, y, slope, now_cmd):
-    while True:
-        if(slope > 0):
-            dx = 200-x
-            dy = abs(dx*slope)
-        else:
-            dx = x
-            dy = abs(dx*slope)
-        if(y+dy >= 400):
-            break
-        else:
-            # rebound
-            y += dy
-            if (slope > 0):
-                x = 200
+def filtData(x, y, speed_y, platform_x, slope, now_cmd):
+    predict_cmd = ""
+    if(speed_y > 0 and y > 150):
+        while True:
+            if(slope > 0):
+                dx = 200-x
+                dy = abs(dx*slope)
             else:
-                x = 0
-            slope = -slope
-    predict_x = (400-y)/slope+x
-    print(predict_x)
+                dx = x
+                dy = abs(dx*slope)
+            if(y+dy >= 400):
+                break
+            else:
+                # rebound
+                y += dy
+                if (slope > 0):
+                    x = 200
+                else:
+                    x = 0
+                slope = -slope
+        predict_x = (400-y)/slope+x
+        if(platform_x > predict_x - random.randint(0, 20)):
+            predict_cmd = 1
+        elif(platform_x < predict_x-random.randint(30, 50)):
+            predict_cmd = 2
+        else:
+            predict_cmd = 0
+    else:
+        if(platform_x > 140):
+            predict_cmd = 1
+        elif(platform_x < 60):
+            predict_cmd = 2
+        else:
+            predict_cmd = 0
+    return predict_cmd
 
 
 def trainData(data, command):
@@ -125,7 +142,7 @@ def trainData(data, command):
         data, command, test_size=0.2, random_state=9)
     model = KNeighborsClassifier(n_neighbors=3)
     model.fit(data_train, cmd_train)
-    #predict_y = model.predict(data_test)
+    # predict_y = model.predict(data_test)
     # print(model.score(data_test, cmd_test))
     # pca = PCA(n_components=2).fit(data_test)
     # pca_2d = pca.transform(data_test)
