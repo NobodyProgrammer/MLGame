@@ -2,6 +2,11 @@ import pickle
 import os
 import numpy as np
 from sklearn.neighbors import KNeighborsClassifier
+from sklearn.model_selection import train_test_split
+from sklearn.cluster import KMeans
+from sklearn import metrics
+from sklearn.decomposition import PCA
+from matplotlib import pyplot as plt
 
 
 def openPickle():
@@ -12,21 +17,17 @@ def openPickle():
     direction = []
     platform = []
     my_command = []
-    for i in range(6):
+    for i in range(16):
         file_path = "../log/"+str(i)+".pickle"
         with open(file_path, 'rb') as f:
             data = pickle.load(f)
         # print(str(data['ml']['scene_info'][0])+"\n")
         scene_info = data['ml']['scene_info']
         command = data['ml']['command']
-        ball_x.append(scene_info[0]['ball'][0])
-        ball_y.append(scene_info[0]['ball'][1])
-        ball_speed_x.append(0)
-        ball_speed_y.append(0)
-        direction.append(0)
-        platform.append(scene_info[0]['platform'][0])
-        my_command.append(0)
         for i, s in enumerate(scene_info[1:]):
+            # if command[i] == "NONE":
+            #     continue
+            # else:
             ball_x.append(s['ball'][0])
             ball_y.append(s['ball'][1])
             platform.append(s['platform'][0])
@@ -48,26 +49,91 @@ def openPickle():
                 else:
                     # left up
                     direction.append(3)
-
-        for c in command[1:]:
-            if c == "NONE":
-                my_command.append(0)
-            elif c == "MOVE_LEFT":
+            # if(ball_speed_y[i] > 0 and ball_y[i] > 150):
+            #     slope = ball_speed_y[i]/ball_speed_x[i]
+            #     cmd = rePredictCommand(
+            #         slope, s['ball'][0], s['ball'][1], s['platform'][0])
+            #     my_command.append(cmd)
+            # else:
+            if command[i] == "MOVE_LEFT":
                 my_command.append(1)
-            else:
+            elif command[i] == "MOVE_RIGHT":
                 my_command.append(2)
+            else:
+                my_command.append(0)
+
     numpy_data = np.array(
-        [ball_x, ball_speed_y, ball_speed_x, ball_speed_y, direction, platform])
+        [ball_x, ball_y, platform])
+
     trainData(np.transpose(numpy_data), my_command)
+    #KMeanTrain(np.transpose(numpy_data), my_command)
 
 
-def rePredictCommand(ball_x, ball_y, platform_x):
-    return "None"
+def KMeanTrain(data, command):
+    kmeans = KMeans(n_clusters=3)
+    kmeans.fit(data)
+    print(command, "\n")
+    print(kmeans.labels_)
+    pca = PCA(n_components=2).fit(data)
+    pca_2d = pca.transform(data)
+    # Plot based on Class
+    for i in range(0, pca_2d.shape[0]):
+        if kmeans.labels_[i] == 0:
+            c1 = plt.scatter(pca_2d[i, 0], pca_2d[i, 1], c='r', marker='+')
+        elif kmeans.labels_[i] == 1:
+            c2 = plt.scatter(pca_2d[i, 0], pca_2d[i, 1], c='g', marker='o')
+        elif kmeans.labels_[i] == 2:
+            c3 = plt.scatter(pca_2d[i, 0], pca_2d[i, 1], c='b', marker='*')
+
+    plt.legend([c1, c2, c3], ['Cluster 1', 'Cluster 2', 'Cluster 3'])
+    plt.show()
+
+    with open("my_model.pickle", 'wb') as f:
+        pickle.dump(kmeans, f)
+
+
+def rePredictCommand(slope, x, y, platform_x):
+    while True:
+        if(slope > 0):
+            dx = 200-x
+            dy = abs(dx*slope)
+        else:
+            dx = x
+            dy = abs(dx*slope)
+        if(y+dy >= 400):
+            break
+        else:
+            # rebound
+            y += dy
+            if (slope > 0):
+                x = 200
+            else:
+                x = 0
+            slope = -slope
+    predict_x = (400-y)/slope+x
+    print(predict_x)
 
 
 def trainData(data, command):
+    # split the train and test data
+    data_train, data_test, cmd_train, cmd_test = train_test_split(
+        data, command, test_size=0.3, random_state=9)
     model = KNeighborsClassifier(n_neighbors=3)
     model.fit(data, command)
+    predict_y = model.predict(data)
+    pca = PCA(n_components=2).fit(data)
+    pca_2d = pca.transform(data)
+    for i in range(0, pca_2d.shape[0]):
+        if predict_y[i] == 0:
+            c1 = plt.scatter(pca_2d[i, 0], pca_2d[i, 1], c='r', marker='+')
+        elif predict_y[i] == 1:
+            c2 = plt.scatter(pca_2d[i, 0], pca_2d[i, 1], c='g', marker='o')
+        elif predict_y[i] == 2:
+            c3 = plt.scatter(pca_2d[i, 0], pca_2d[i, 1], c='b', marker='*')
+
+    plt.legend([c1, c2, c3], ['Cluster 1', 'Cluster 2', 'Cluster 3'])
+    plt.show()
+    # print(model.score(np.array(cmd_test).reshape(1, -1), predict_y))
     with open("my_model.pickle", 'wb') as f:
         pickle.dump(model, f)
 

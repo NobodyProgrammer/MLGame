@@ -47,17 +47,17 @@ class MLPlay:
                 # if(self.predict_x < 0):
                 self.predictPoint(x, y)
                 # print("predict="+str(self.predict_x))
-                if(now_plat_x > self.predict_x - random.randint(10, 20)):
+                if(now_plat_x > self.predict_x - random.randint(0, 20)):
                     command = "MOVE_LEFT"
-                elif(now_plat_x < self.predict_x-random.randint(20, 30)):
+                elif(now_plat_x < self.predict_x-random.randint(30, 50)):
                     command = "MOVE_RIGHT"
                 else:
                     command = "NONE"
             else:
                 self.predict_x = -100
-                if(now_plat_x > 80):
+                if(now_plat_x > 140):
                     command = "MOVE_LEFT"
-                elif(now_plat_x < 80):
+                elif(now_plat_x < 60):
                     command = "MOVE_RIGHT"
                 else:
                     command = "NONE"
