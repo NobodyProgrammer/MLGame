@@ -23,7 +23,6 @@ class MLPlay:
         Generate the command according to the received `scene_info`.
         """
         # Make the caller to invoke `reset()` for the next round.
-
         if (scene_info["status"] == "GAME_OVER" or
                 scene_info["status"] == "GAME_PASS"):
             # print(self.last_x)
@@ -31,7 +30,7 @@ class MLPlay:
 
         if not self.ball_served:
             self.ball_served = True
-            command = "SERVE_TO_RIGHT"
+            command = "SERVE_TO_LEFT"
         else:
             command = ""
             x = (scene_info.get('ball')[0])
@@ -63,7 +62,7 @@ class MLPlay:
                     command = "NONE"
             self.last_x = x
             self.last_y = y
-        print(command)
+
         return command
 
     def predictPoint(self, x, y):
