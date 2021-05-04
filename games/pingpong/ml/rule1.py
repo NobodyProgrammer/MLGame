@@ -40,17 +40,17 @@ class MLPlay:
             block_x = 0
             #print(ball_y, self.ball_last_y)
             if(ball_y-self.ball_last_y > 0):
-                if(ball_y > 390):
-                    print(ball_y)
+                # if(ball_y > 390):
+                # print(ball_y)
                 predict_x = self.predict(ball_x, ball_y, block_x)
+                if(predict_x == -1):  # if the slope divide zero
+                    return "NONE"
                 if(p1_x > predict_x - random.randint(10, 20)):
                     command = "MOVE_LEFT"
                 elif(p1_x < predict_x-random.randint(30, 40)):
                     command = "MOVE_RIGHT"
                 else:
-
                     command = "NONE"
-
                 # print(scene_info.get('ball_speed'))
             else:
                 if(p1_x > 100):
@@ -64,6 +64,8 @@ class MLPlay:
             return command
 
     def predict(self, x, y, block_x):
+        if(x-self.ball_last_x == 0):
+            return -1
         slope = (y-self.ball_last_y)/(x-self.ball_last_x)
         while True:
             if(slope > 0):

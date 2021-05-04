@@ -26,8 +26,9 @@ class MLPlay:
         Generate the command according to the received scene information
         """
         if scene_info["status"] != "GAME_ALIVE":
-            print("ball_x=", scene_info.get("ball")[0])
-            # \\return "RESET"
+            #print("ball_x=", scene_info.get("ball")[0])
+            print("ball_speend=", scene_info.get("ball_speed")[0])
+            return "RESET"
 
         if not self.ball_served:
             self.ball_served = True
@@ -42,7 +43,9 @@ class MLPlay:
             if(ball_y-self.ball_last_y < 0):
 
                 predict_x = self.predict(ball_x, ball_y, block_x)
-                if(p2_x > predict_x-random.randint(10, 20)):
+                if(predict_x == -1):
+                    return "NONE"  # if the slope divide zero
+                elif(p2_x > predict_x-random.randint(10, 20)):
                     command = "MOVE_LEFT"
                 elif(p2_x < predict_x-random.randint(30, 40)):
                     command = "MOVE_RIGHT"
@@ -63,6 +66,8 @@ class MLPlay:
             return command
 
     def predict(self, x, y, block_x):
+        if(x-self.ball_last_x == 0):
+            return -1
         slope = (y-self.ball_last_y)/(x-self.ball_last_x)
         while True:
             if(slope > 0):
