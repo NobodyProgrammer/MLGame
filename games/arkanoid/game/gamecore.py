@@ -7,14 +7,17 @@ from .gameobject import (
     Ball, Platform, Brick, HardBrick, PlatformAction, SERVE_BALL_ACTIONS
 )
 
+
 class Difficulty(StringEnum):
     EASY = auto()
     NORMAL = auto()
+
 
 class GameStatus(StringEnum):
     GAME_ALIVE = auto()
     GAME_OVER = auto()
     GAME_PASS = auto()
+
 
 class Scene:
     area_rect = pygame.Rect(0, 0, 200, 500)
@@ -35,7 +38,8 @@ class Scene:
     def _create_moves(self):
         self._group_move = pygame.sprite.RenderPlain()
         enable_slide_ball = False if self._difficulty == Difficulty.EASY else True
-        self._ball = Ball((93, 395), Scene.area_rect, enable_slide_ball, self._group_move)
+        self._ball = Ball((93, 395), Scene.area_rect,
+                          enable_slide_ball, self._group_move)
         self._platform = Platform((75, 400), Scene.area_rect, self._group_move)
 
     def _create_bricks(self, level: int):
@@ -48,19 +52,22 @@ class Scene:
 
         import os.path
         dir_path = os.path.dirname(__file__)
-        level_file_path = os.path.join(dir_path, "level_data/{0}.dat".format(level))
+        level_file_path = os.path.join(
+            dir_path, "level_data/{0}.dat".format(level))
 
         with open(level_file_path, 'r') as input_file:
-            offset_x, offset_y, _ = get_coordinate_and_type(input_file.readline())
+            offset_x, offset_y, _ = get_coordinate_and_type(
+                input_file.readline())
             for input_pos in input_file:
-                pos_x, pos_y, type = get_coordinate_and_type(input_pos.rstrip("\n"))
+                pos_x, pos_y, type = get_coordinate_and_type(
+                    input_pos.rstrip("\n"))
                 BrickType = {
                     0: Brick,
                     1: HardBrick,
                 }.get(type, Brick)
 
                 brick = BrickType((pos_x + offset_x, pos_y + offset_y),
-                    self._group_brick)
+                                  self._group_brick)
                 self._brick_container.append(brick)
 
     def reset(self):
@@ -84,7 +91,7 @@ class Scene:
         if not self._ball_served:
             # Force to serve the ball after 150 frames
             if (self._frame_count >= 150 and
-                platform_action not in SERVE_BALL_ACTIONS):
+                    platform_action not in SERVE_BALL_ACTIONS):
                 platform_action = random.choice(SERVE_BALL_ACTIONS)
 
             self._wait_for_serving_ball(platform_action)

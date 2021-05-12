@@ -9,16 +9,19 @@ from .gameobject import (
 color_1P = (219, 70, 92)    # Red
 color_2P = (84, 149, 255)    # Blue
 
+
 class Difficulty(StringEnum):
     EASY = auto()
     NORMAL = auto()
     HARD = auto()
+
 
 class GameStatus(StringEnum):
     GAME_1P_WIN = auto()
     GAME_2P_WIN = auto()
     GAME_DRAW = auto()
     GAME_ALIVE = auto()
+
 
 class Scene:
     area_rect = pygame.Rect(0, 0, 200, 500)
@@ -38,9 +41,9 @@ class Scene:
         enable_slice_ball = False if self._difficulty == Difficulty.EASY else True
         self._ball = Ball(Scene.area_rect, enable_slice_ball, self._draw_group)
         self._platform_1P = Platform((80, Scene.area_rect.height - 80),
-            Scene.area_rect, "1P", color_1P, self._draw_group)
+                                     Scene.area_rect, "1P", color_1P, self._draw_group)
         self._platform_2P = Platform((80, 50),
-            Scene.area_rect, "2P", color_2P, self._draw_group)
+                                     Scene.area_rect, "2P", color_2P, self._draw_group)
         if self._difficulty != Difficulty.HARD:
             # Put the blocker at the end of the world
             self._blocker = Blocker(1000, Scene.area_rect, self._draw_group)
@@ -48,7 +51,8 @@ class Scene:
             self._blocker = Blocker(240, Scene.area_rect, self._draw_group)
 
         # Initialize the position of the ball
-        self._ball.stick_on_platform(self._platform_1P.rect, self._platform_2P.rect)
+        self._ball.stick_on_platform(
+            self._platform_1P.rect, self._platform_2P.rect)
 
     def reset(self):
         self._frame_count = 0
@@ -61,10 +65,11 @@ class Scene:
         self._blocker.reset()
 
         # Initialize the position of the ball
-        self._ball.stick_on_platform(self._platform_1P.rect, self._platform_2P.rect)
+        self._ball.stick_on_platform(
+            self._platform_1P.rect, self._platform_2P.rect)
 
     def update(self,
-        move_action_1P: PlatformAction, move_action_2P: PlatformAction):
+               move_action_1P: PlatformAction, move_action_2P: PlatformAction):
         self._frame_count += 1
         self._platform_1P.move(move_action_1P)
         self._platform_2P.move(move_action_2P)
@@ -79,7 +84,7 @@ class Scene:
             self._game_status = GameStatus.GAME_2P_WIN
         elif self._ball.rect.bottom < self._platform_2P.rect.top:
             self._game_status = GameStatus.GAME_1P_WIN
-        elif abs(min(self._ball.speed, key = abs)) > 40:
+        elif abs(min(self._ball.speed, key=abs)) > 40:
             self._game_status = GameStatus.GAME_DRAW
         else:
             self._game_status = GameStatus.GAME_ALIVE
@@ -87,13 +92,14 @@ class Scene:
         return self._game_status
 
     def _wait_for_serving_ball(self, action_1P: PlatformAction, action_2P: PlatformAction):
-        self._ball.stick_on_platform(self._platform_1P.rect, self._platform_2P.rect)
+        self._ball.stick_on_platform(
+            self._platform_1P.rect, self._platform_2P.rect)
 
         target_action = action_1P if self._ball.serve_from_1P else action_2P
 
         # Force to serve the ball after 150 frames
         if (self._frame_count >= 150 and
-            target_action not in SERVE_BALL_ACTIONS):
+                target_action not in SERVE_BALL_ACTIONS):
             target_action = random.choice(SERVE_BALL_ACTIONS)
 
         if target_action in SERVE_BALL_ACTIONS:
@@ -107,7 +113,8 @@ class Scene:
             self._ball.speed_up()
 
         self._ball.move()
-        self._ball.check_bouncing(self._platform_1P, self._platform_2P, self._blocker)
+        self._ball.check_bouncing(
+            self._platform_1P, self._platform_2P, self._blocker)
 
     def draw_gameobjects(self, surface):
         self._draw_group.draw(surface)
